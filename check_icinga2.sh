@@ -27,6 +27,7 @@ set -u -e -o pipefail # exit-on-error, error on undeclared variables.
 
 PATH+=":/usr/share/monitoring-common-shell-library"
 
+# shellcheck disable=SC1091
 . functions.sh
 [ "x${?}" == "x0" ] || \
    { fail "unable to include 'functions.sh'!"; exit 1; }
@@ -40,10 +41,11 @@ fi
 # <Variables>
 #
 
-readonly PROGNAME="$(basename $0)"
+readonly PROGNAME="$(basename "${0}")"
 readonly VERSION="1.0"
 
-declare -g TMPDIR= STATE_FILE=
+declare -g TMPDIR='' STATE_FILE=''
+# shellcheck disable=SC2034
 declare -g -a WELL_KNOWN_KEYS=(
    'counter'
    'crit'
@@ -130,7 +132,7 @@ EOF
 # <Functions>
 #
 
-# @function validate_param()
+# @function plugin_params_validate()
 # @brief This functions validates the provided command-line parameters and
 # returns 0, if the given arguments are valid. otherwise it returns 1.
 # @return int
@@ -208,8 +210,9 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL certificate in PEM format
    #
-   if has_param_value ICINGA2_CERT && ! [[ "$(get_param_value ICINGA2_CERT)" =~ ^[[:graph:]]+$ ]] || \
-      [ ! -r $(get_param_value ICINGA2_CERT) ]; then
+   if has_param_value ICINGA2_CERT && \
+      ! [[ "$(get_param_value ICINGA2_CERT)" =~ ^[[:graph:]]+$ ]] || \
+      [ ! -r "$(get_param_value ICINGA2_CERT)" ]; then
       fail "Invalid Icinga2 cert provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -217,8 +220,9 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL certificate
    #
-   if has_param_value ICINGA2_KEY && ! [[ "$(get_param_value ICINGA2_KEY)" =~ ^[[:graph:]]+$ ]] || \
-      [ ! -r $(get_param_value ICINGA2_KEY) ]; then
+   if has_param_value ICINGA2_KEY && \
+      ! [[ "$(get_param_value ICINGA2_KEY)" =~ ^[[:graph:]]+$ ]] || \
+      [ ! -r "$(get_param_value ICINGA2_KEY)" ]; then
       fail "Invalid Icinga2 key provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -226,8 +230,10 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL CA certificate
    #
-   if has_param_value ICINGA2_CACERT && ! [[ "$(get_param_value ICINGA2_CACERT)" =~ ^[[:graph:]]+$ ]] || \
-      ( [ "$(get_param_value ICINGA2_CACERT)" != "noverify" ] && [ ! -r $(get_param_value ICINGA2_CACERT) ] ); then
+   if has_param_value ICINGA2_CACERT && \
+      ! [[ "$(get_param_value ICINGA2_CACERT)" =~ ^[[:graph:]]+$ ]] || ( \
+      [ "$(get_param_value ICINGA2_CACERT)" != "noverify" ] && \
+      [ ! -r "$(get_param_value ICINGA2_CACERT)" ] ); then
       fail "Invalid Icinga2 CA certificate provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -268,7 +274,8 @@ plugin_worker ()
 # @return int
 fetch_icinga2_status ()
 {
-   local QUERY_URI="" CURL_OPT="" RETVAL=
+   local QUERY_URI="" RETVAL=
+   local -a CURL_OPT=()
 
    #
    # Query URI
@@ -288,7 +295,7 @@ fetch_icinga2_status ()
    QUERY_URI+=":$(get_param_value ICINGA2_PORT)"
    QUERY_URI+="$(get_param_value ICINGA2_URI)"
 
-   if ! [[ "${QUERY_URI}" =~ ^https?:\/\/[[:graph:]]+$ ]]; then
+   if ! [[ "${QUERY_URI}" =~ ^https?://[[:graph:]]+$ ]]; then
       fail "An invalid looking query URI was generated using the provided Icinga2 parameters!"
       return 1
    fi
@@ -318,38 +325,39 @@ fetch_icinga2_status ()
       cat >${TMPDIR}/.netrc <<-EOF
       machine $(get_param_value ICINGA2_HOST) login $(get_param_value ICINGA2_USER) password $(get_param_value ICINGA2_PASS)
 EOF
-      CURL_OPT+="--netrc-file ${TMPDIR}/.netrc"
+      CURL_OPT+=( "--netrc-file ${TMPDIR}/.netrc" )
    fi
 
    #
    # certificate-authentication
    #
    if has_param_value ICINGA2_CERT; then
-      CURL_OPT+="--cert $(get_param_value ICINGA2_CERT) "
-      CURL_OPT+="--key $(get_param_value ICINGA2_KEY) "
+      CURL_OPT+=( "--cert $(get_param_value ICINGA2_CERT) " )
+      CURL_OPT+=( "--key $(get_param_value ICINGA2_KEY) " )
    fi
 
    if has_param_value ICINGA2_CACERT; then
-      local CACERT="$(get_param_value ICINGA2_CACERT)"
+      local CACERT
+      CACERT="$(get_param_value ICINGA2_CACERT)"
       # disable SSL server cert verification, take at your own risk!
       if [ "${CACERT}" == "noverify" ]; then
-         CURL_OPT+="-k "
+         CURL_OPT+=( "-k " )
       else
-         CURL_OPT+="--cacert ${CACERT} "
+         CURL_OPT+=( "--cacert ${CACERT} " )
       fi
    fi
 
-   debug "Will authenticate at Icinga2 API with: ${CURL_OPT:0:-1}"
+   debug "Will authenticate at Icinga2 API with: ${CURL_OPT[*]:0:-1}"
 
-   CURL_OPT+="-o ${STATE_FILE} "
+   CURL_OPT+=( "-o ${STATE_FILE} " )
 
    if is_debug; then
-      CURL_OPT+="-v "
+      CURL_OPT+=( "-v " )
    else
-      CURL_OPT+="-s "
+      CURL_OPT+=( "-s " )
    fi
 
-   curl ${CURL_OPT:0:-1} ${QUERY_URI}
+   curl "${CURL_OPT[@]}" "${QUERY_URI}"
    RETVAL=$?
 
    if [ "x${RETVAL}" != "x0" ]; then
@@ -384,7 +392,7 @@ parse_icinga2_status ()
       return 1
    fi
 
-   local LABEL= KEY= VALUE= LINE=
+   local LABEL='' KEY='' VALUE='' LINE=''
    local -A READING=()
    local -a LABELS=() READINGS=()
 
@@ -492,7 +500,7 @@ parse_icinga2_status ()
 # @function eval_icinga2_status()
 # @brief This function evaluates the parsed heath-information that
 # has been previously stored in $RESULTS.
-# @TODO At the momemnt, that is actually no matching against thresholds.
+# TODO At the moment, that is actually no matching against thresholds.
 # Just OK if state-information exists, otherwise it issues a WARNING.
 # @return int
 eval_icinga2_status ()
@@ -500,7 +508,7 @@ eval_icinga2_status ()
    if ! is_array RESULTS || [ ${#RESULTS[@]} -lt 1 ]; then
       set_result_text "No Icinga2 state is available!"
       set_result_code "${CSL_EXIT_WARNING}"
-      return ${CSL_EXIT_WARNING}
+      return "${CSL_EXIT_WARNING}"
    fi
 
    local RESULT_PERFC=""
@@ -515,7 +523,7 @@ eval_icinga2_status ()
    fi
 
    set_result_text "OK"
-   set_result_code ${CSL_EXIT_OK}
+   set_result_code "${CSL_EXIT_OK}"
 }
 
 # @function plugin_startup()
@@ -538,44 +546,6 @@ plugin_startup ()
    [ ! -z "${TMPDIR}" ] || { fail "Failed to create temporary directory in /tmp!"; return 1; }
 }
 
-# @function in_array()
-# @brief This function search through the array $1 for the value $2.
-# On success, it returns 0. Otherwise it returns 1.
-# found at https://raymii.org/s/snippets/Bash_Bits_Check_If_Item_Is_In_Array.html
-# @return int
-in_array ()
-{
-   [ $# -eq 2 ] || return 1
-   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
-   is_array $1 || return 1
-
-   local -a 'haystack=("${'"$1"'[@]}")'
-
-   for i in "${haystack[@]}"; do
-      if [[ "${i}" =~ ${2} ]]; then
-         return 0
-      fi
-   done
-
-   return 1
-}
-
-# @function is_array()
-# @brief This function returns 0, if $1 is the name of an array that has
-# been declared. Otherwise it returns 1.
-# @return int
-is_array ()
-{
-   [ $# -eq 1 ] || return 1
-   [[ "${1}" =~ ^[[:graph:]]+$ ]] || return 1
-
-   if ! [[ "$(declare -p ${1} 2>&1)" =~ ^declare[[:blank:]]+-(a|A)[[:blank:]]+ ]]; then
-      return 1
-   fi
-
-   return 0
-}
-
 #
 # </Functions>
 #
@@ -592,7 +562,7 @@ startup "${@}"
 # so we should not get to this end at all.
 # Anyway we exit with $CSL_EXIT_UNKNOWN in case.
 #
-exit $CSL_EXIT_UNKNOWN
+exit "${CSL_EXIT_UNKNOWN}"
 
 #
 # </TheActualWorkStartsHere>

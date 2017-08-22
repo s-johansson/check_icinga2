@@ -1,5 +1,11 @@
 # Changes in check_icinga2
 
+# 1.1 (unreleased)
+
+* update code to make shellcheck happy.
+* remove some functions that are now already provided by the
+  monitoring-common-shell-library
+
 # 1.0 (2017-08-19)
 
 * Initial release
