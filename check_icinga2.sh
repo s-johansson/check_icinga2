@@ -325,15 +325,15 @@ fetch_icinga2_status ()
       cat >${TMPDIR}/.netrc <<-EOF
       machine $(get_param_value ICINGA2_HOST) login $(get_param_value ICINGA2_USER) password $(get_param_value ICINGA2_PASS)
 EOF
-      CURL_OPT+=( "--netrc-file ${TMPDIR}/.netrc" )
+      CURL_OPT+=( "--netrc-file" "${TMPDIR}/.netrc" )
    fi
 
    #
    # certificate-authentication
    #
    if has_param_value ICINGA2_CERT; then
-      CURL_OPT+=( "--cert $(get_param_value ICINGA2_CERT) " )
-      CURL_OPT+=( "--key $(get_param_value ICINGA2_KEY) " )
+      CURL_OPT+=( "--cert" "$(get_param_value ICINGA2_CERT)" )
+      CURL_OPT+=( "--key" "$(get_param_value ICINGA2_KEY)" )
    fi
 
    if has_param_value ICINGA2_CACERT; then
@@ -341,20 +341,20 @@ EOF
       CACERT="$(get_param_value ICINGA2_CACERT)"
       # disable SSL server cert verification, take at your own risk!
       if [ "${CACERT}" == "noverify" ]; then
-         CURL_OPT+=( "-k " )
+         CURL_OPT+=( "--insecure" )
       else
-         CURL_OPT+=( "--cacert ${CACERT} " )
+         CURL_OPT+=( "--cacert" "${CACERT}" )
       fi
    fi
 
    debug "Will authenticate at Icinga2 API with: ${CURL_OPT[*]}"
 
-   CURL_OPT+=( "-o ${STATE_FILE} " )
+   CURL_OPT+=( "--output" "${STATE_FILE}" )
 
    if is_debug; then
-      CURL_OPT+=( "-v " )
+      CURL_OPT+=( "--verbose" )
    else
-      CURL_OPT+=( "-s " )
+      CURL_OPT+=( "--silent" )
    fi
 
    curl "${CURL_OPT[@]}" "${QUERY_URI}"
