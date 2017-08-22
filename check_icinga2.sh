@@ -210,9 +210,9 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL certificate in PEM format
    #
-   if has_param_value ICINGA2_CERT && \
+   if has_param_value ICINGA2_CERT && ( \
       ! [[ "$(get_param_value ICINGA2_CERT)" =~ ^[[:graph:]]+$ ]] || \
-      [ ! -r "$(get_param_value ICINGA2_CERT)" ]; then
+      [ ! -r "$(get_param_value ICINGA2_CERT)" ] ); then
       fail "Invalid Icinga2 cert provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -220,9 +220,9 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL certificate
    #
-   if has_param_value ICINGA2_KEY && \
+   if has_param_value ICINGA2_KEY && ( \
       ! [[ "$(get_param_value ICINGA2_KEY)" =~ ^[[:graph:]]+$ ]] || \
-      [ ! -r "$(get_param_value ICINGA2_KEY)" ]; then
+      [ ! -r "$(get_param_value ICINGA2_KEY)" ] ); then
       fail "Invalid Icinga2 key provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -230,10 +230,10 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL CA certificate
    #
-   if has_param_value ICINGA2_CACERT && \
+   if has_param_value ICINGA2_CACERT && ( \
       ! [[ "$(get_param_value ICINGA2_CACERT)" =~ ^[[:graph:]]+$ ]] || ( \
       [ "$(get_param_value ICINGA2_CACERT)" != "noverify" ] && \
-      [ ! -r "$(get_param_value ICINGA2_CACERT)" ] ); then
+      [ ! -r "$(get_param_value ICINGA2_CACERT)" ] ) ); then
       fail "Invalid Icinga2 CA certificate provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -347,7 +347,7 @@ EOF
       fi
    fi
 
-   debug "Will authenticate at Icinga2 API with: ${CURL_OPT[*]:0:-1}"
+   debug "Will authenticate at Icinga2 API with: ${CURL_OPT[*]}"
 
    CURL_OPT+=( "-o ${STATE_FILE} " )
 
