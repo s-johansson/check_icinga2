@@ -35,6 +35,31 @@ endif
 
 .PHONY: all
 
-all:
+all: cert
 	@run-parts $(rparts_args) --exit-on-error --regex '^1[[:digit:]][[:digit:]]_' $(script_args) 1xx
 	@run-parts $(rparts_args) --exit-on-error --regex '^2[[:digit:]][[:digit:]]_' $(script_args) 2xx
+
+cert: OPENSSL_BIN := openssl
+cert:	OPENSSL_CONF := $(CURDIR)/openssl.cnf
+cert: clean
+	@# prepare the OpenSSL CA directory structure
+	echo ${OPENSSL_CONF}
+	mkdir $(CURDIR)/testCA
+	mkdir $(CURDIR)/testCA/private
+	mkdir $(CURDIR)/testCA/newcerts
+	mkdir $(CURDIR)/testCA/certs
+	touch $(CURDIR)/testCA/index.txt
+	touch $(CURDIR)/testCA/index.txt.attr
+	echo "!!! CA IS FOR TESTING PURPOSE ONLY (INSECURE) !!!" | tee $(CURDIR)/testCA/__WARNING__
+	echo 0000 | tee $(CURDIR)/testCA/serial
+	@# create the CA private key.
+	$(OPENSSL_BIN) genrsa -out $(CURDIR)/testCA/private/cakey.pem 1024
+	@# create the self-signed CA certificate.
+	$(OPENSSL_BIN) req -config $(OPENSSL_CONF) -new -x509 -extensions v3_ca -key $(CURDIR)/testCA/private/cakey.pem -out $(CURDIR)/testCA/cacert.pem -batch
+	@# create the host cert request.
+	$(OPENSSL_BIN) req -config $(OPENSSL_CONF) -new -newkey rsa:1024 -keyout $(CURDIR)/testCA/private/host_key.pem -out $(CURDIR)/testCA/certs/host_req.pem -batch
+	@# sign the host cert request by the CA.
+	$(OPENSSL_BIN) ca -config $(OPENSSL_CONF) -in $(CURDIR)/testCA/certs/host_req.pem -out $(CURDIR)/testCA/certs/host_crt.pem -batch
+
+clean:
+	[ ! -d $(CURDIR)/testCA ] || rm -rf $(CURDIR)/testCA
