@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of check_icinga2.
+# This file is part of check_icinga2 v1.0.
 #
 # check_icinga2, a monitoring plugin for (c) Icinga2.
 #
@@ -19,6 +19,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
 
+# @author Andreas Unterkircher
+# @license AGPLv3
+# @title check_icinga2
+# @version 1.0
 
 set -u -e -o pipefail # exit-on-error, error on undeclared variables.
 #shopt -s sourcepath  # in case Bash won't consider $PATH.
@@ -37,11 +41,17 @@ if [ $# -ge 1 ] && [ "${1}" == "-n" ]; then
    shift
 fi
 
+if ! is_func csl_require_libvers || \
+   ! [[ "$(csl_require_libvers "1.5")" =~ ^(gt|eq)$ ]]; then
+   echo "monitoring-common-shell-library v1.5 or higher is required."
+   exit 1
+fi
+
 #
 # <Variables>
 #
 
-readonly PROGNAME="$(basename "${0}")"
+readonly PROGNAME="check_icinga2"
 readonly VERSION="1.0"
 
 declare -g TMPDIR='' STATE_FILE=''
@@ -64,16 +74,16 @@ declare -g -A RESULTS=()
 # </Variables>
 #
 
-add_param '-H:' --host: ICINGA2_HOST localhost
-add_param '-p:' --port: ICINGA2_PORT 5665
-add_param '-u:' --uri:  ICINGA2_URI  /v1/status
-add_param '-f:' --file: ICINGA2_FILE
-add_param '-P:' --protocol: ICINGA2_PROTO https
-add_param '-U:' --user: ICINGA2_USER
-add_param '-W:' --password: ICINGA2_PASS
-add_param '-C:' --cert: ICINGA2_CERT
-add_param '-K:' --key: ICINGA2_KEY
-add_param '-A:' --cacert: ICINGA2_CACERT
+add_param '-H:' --host:       ICINGA2_HOST localhost
+add_param '-p:' --port:       ICINGA2_PORT 5665
+add_param '-u:' --uri:        ICINGA2_URI  /v1/status
+add_param '-f:' --file:       ICINGA2_FILE
+add_param '-P:' --protocol:   ICINGA2_PROTO https
+add_param '-U:' --user:       ICINGA2_USER
+add_param '-W:' --password:   ICINGA2_PASS
+add_param '-C:' --cert:       ICINGA2_CERT
+add_param '-K:' --key:        ICINGA2_KEY
+add_param '-A:' --cacert:     ICINGA2_CACERT
 
 set_help_text <<EOF
 ${PROGNAME}, v${VERSION}
@@ -83,8 +93,8 @@ ${PROGNAME}, v${VERSION}
    -d, --debug        ... enable debugging.
    -f, --file         ... use file as input instead of querying Icinga2 API
 
-   -w, --warning=arg  ... warning limit, see below LIMITS section.
-   -c, --critical=arg ... critical limit, see below LIMITS section.
+   -w, --warning=arg  ... warning threshold, see below THRESHOLDS section.
+   -c, --critical=arg ... critical threshold, see below THRESHOLDS section.
 
 Icinga2 API:
 
@@ -111,7 +121,7 @@ Icinga2 API Authentication:
                           as argument to this parameter, to disable verification.
                           Use --debug to get verbose output of curl.
 
-LIMITS are given similar to check_procs:
+THRESHOLDS are given similar to check_procs:
 
    * greater-than-or-equal-match (max) results in warning on:
       --warning :4
@@ -162,7 +172,8 @@ plugin_params_validate ()
    #
    # Icinga2 host
    #
-   if ! has_param_value ICINGA2_HOST || ! [[ "$(get_param_value ICINGA2_HOST)" =~ ^[[:graph:]]+$ ]]; then
+   if ! has_param_value ICINGA2_HOST || \
+      ! [[ "$(get_param_value ICINGA2_HOST)" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid Icinga2 hostname provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -170,7 +181,8 @@ plugin_params_validate ()
    #
    # Icinga2 API port
    #
-   if ! has_param_value ICINGA2_PORT || ! [[ "$(get_param_value ICINGA2_PORT)" =~ ^[[:digit:]]+$ ]]; then
+   if ! has_param_value ICINGA2_PORT || \
+      ! [[ "$(get_param_value ICINGA2_PORT)" =~ ^[[:digit:]]+$ ]]; then
       fail "Invalid Icinga2 port provided. Allowed are only numeric characters!"
       return 1
    fi
@@ -178,7 +190,8 @@ plugin_params_validate ()
    #
    # Icinga2 API status URI
    #
-   if ! has_param_value ICINGA2_URI || ! [[ "$(get_param_value ICINGA2_URI)" =~ ^[[:graph:]]+$ ]]; then
+   if ! has_param_value ICINGA2_URI || \
+      ! [[ "$(get_param_value ICINGA2_URI)" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid Icinga2 URI provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -186,7 +199,8 @@ plugin_params_validate ()
    #
    # Icinga2 API protocol
    #
-   if ! has_param_value ICINGA2_PROTO || ! [[ "$(get_param_value ICINGA2_PROTO)" =~ ^https?$ ]]; then
+   if ! has_param_value ICINGA2_PROTO || \
+      ! [[ "$(get_param_value ICINGA2_PROTO)" =~ ^https?$ ]]; then
       fail "Invalid Icinga2 protocol provided. Allowed are only http or https!"
       return 1
    fi
@@ -194,7 +208,8 @@ plugin_params_validate ()
    #
    # Icinga2 API authentication username
    #
-   if has_param_value ICINGA2_USER && ! [[ "$(get_param_value ICINGA2_USER)" =~ ^[[:graph:]]$ ]]; then
+   if has_param_value ICINGA2_USER && \
+      ! [[ "$(get_param_value ICINGA2_USER)" =~ ^[[:graph:]]+$ ]]; then
       fail "Invalid Icinga2 user provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -202,8 +217,9 @@ plugin_params_validate ()
    #
    # Icinga2 API authentication password
    #
-   if has_param_value ICINGA2_PASS && ! [[ "$(get_param_value ICINGA2_PASS)" =~ ^[[:graph:]]$ ]]; then
-      fail "Invalid Icinga2 user provided. Allowed are only alpha-numeric and punctation characters!"
+   if has_param_value ICINGA2_PASS && \
+      ! [[ "$(get_param_value ICINGA2_PASS)" =~ ^[[:graph:]]+$ ]]; then
+      fail "Invalid Icinga2 password provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
 
@@ -238,6 +254,16 @@ plugin_params_validate ()
       return 1
    fi
 
+   #
+   # Icinga2 API status as file.
+   #
+   if has_param_value ICINGA2_FILE && ( \
+      ! [[ "$(get_param_value ICINGA2_FILE)" =~ ^[[:print:]]+$ ]] || \
+      [ ! -r "$(get_param_value ICINGA2_FILE)" ] ); then
+      fail "Invalid Icinga2 API status file is not readable.!"
+      return 1
+   fi
+
    return 0
 }
 
@@ -254,17 +280,19 @@ plugin_worker ()
 
    if ! has_param_value ICINGA2_FILE; then
       fetch_icinga2_status || \
-         { echo "fetch_icinga2_status() returned non-zero!"; exit 1; }
+         { fail "fetch_icinga2_status() returned non-zero!"; exit 1; }
    fi
 
    parse_icinga2_status || \
-      { echo "parse_icinga2_status() returned non-zero!"; exit 1; }
+      { fail "parse_icinga2_status() returned non-zero!"; exit 1; }
 
-   is_array RESULTS || return 1
-   [ ${#RESULTS[@]} -ge 1 ] || return 1
+   if ! is_array RESULTS || [ ${#RESULTS[@]} -lt 1 ]; then
+      fail "No valid Icinga2 status was retrieved!"
+      exit 1
+   fi
 
    eval_icinga2_status || \
-      { echo "eval_icinga2_status() returned non-zero!"; exit 1; }
+      { fail "eval_icinga2_status() returned non-zero!"; exit 1; }
 }
 
 # @function fetch_icinga2_status()
@@ -320,6 +348,8 @@ fetch_icinga2_status ()
 
    #
    # basic-authentication via curl+netrc
+   # so the password is _not_ visible as
+   # command-line parameter.
    #
    if has_param_value ICINGA2_USER; then
       cat >${TMPDIR}/.netrc <<-EOF
@@ -370,7 +400,7 @@ EOF
       return 1
    fi
 
-   return $RETVAL
+   return "${RETVAL}"
 }
 
 # @function parse_icinga2_status()
@@ -392,7 +422,7 @@ parse_icinga2_status ()
       return 1
    fi
 
-   local LABEL='' KEY='' VALUE='' LINE=''
+   local LABEL='' KEY='' VALUE='' LINE='' RETVAL
    local -A READING=()
    local -a LABELS=() READINGS=()
 
@@ -402,16 +432,35 @@ parse_icinga2_status ()
    # first lookout for everything that looks like performance statistics
    #
    mapfile -t LABELS < <(jq -M -r .results[].perfdata[].label < ${STATE_FILE})
+   RETVAL="${?}"
 
-   is_array LABELS || { fail "Failed to parse JSON data in ${STATE_FILE}!"; return 1; }
+   if [ "x${RETVAL}" != "x0" ]; then
+      echo "'jq' or 'mapfile' exited non-zero (${RETVAL})!."
+      return 1
+   fi
+
+   if ! is_array LABELS || [ ${#LABELS[@]} -lt 1 ]; then
+      fail "Failed to parse JSON data in ${STATE_FILE}!"
+      return 1
+   fi
 
    #
    # retrieve
    #
    for LABEL in "${LABELS[@]}"; do
       mapfile -t READINGS < <(jq -M -j ".results[].perfdata[] | select(.label == \"${LABEL}\")" < ${STATE_FILE})
+      RETVAL="${?}"
 
-      is_array READINGS || { fail "Failed to fetch labels from ${STATE_FILE}!"; return 1; }
+      if [ "x${RETVAL}" != "x0" ]; then
+         echo "'jq' or 'mapfile' exited non-zero (${RETVAL})!."
+         return 1
+      fi
+
+      if ! is_array READINGS || [ ${#READINGS[@]} -lt 1 ]; then
+         fail "Failed to fetch labels from ${STATE_FILE}!"
+         return 1
+      fi
+
       # debug "${READINGS[*]}"
 
       READING=()
@@ -430,16 +479,20 @@ parse_icinga2_status ()
          KEY="${BASH_REMATCH[1]}"
          VALUE="${BASH_REMATCH[2]//null/}"
 
-         in_array WELL_KNOWN_KEYS "${KEY}" || { debug "Got an unknown perfdata key '${KEY}' - you might want to add it to WELL_KNOWN_KEYS"; }
+         if ! in_array WELL_KNOWN_KEYS "${KEY}"; then
+            verbose "Got an unknown perfdata key '${KEY}' - you might want to add it to WELL_KNOWN_KEYS"
+         fi
 
          debug "Found ${LABEL}[${KEY}]=${VALUE}"
          READING[${KEY}]="${VALUE}"
       done
 
       [ ${#READING[@]} -gt 0 ] || continue
+
       [[ -v "READING[label]" ]] || { fail "Label not set!"; return 1; }
       [[ -v "READING[value]" ]] || { fail "Value not set!"; return 1; }
-      # have no idea yet, why the above regexp returns a ' ' for zero-string values.
+      # have no idea yet, why the above regexp returns a ' ' for zero-string values
+      # so clear it.
       [[ -v "READING[unit]" ]] && [[ "${READING['unit']}" =~ ^[[:blank:]]+$ ]] && READING['unit']=''
 
       ! [[ -v "RESULTS[${LABEL}]" ]] || { debug "Possible duplicate key '${KEY}'. Skipping it."; continue; }
@@ -452,8 +505,17 @@ parse_icinga2_status ()
    #
    READINGS=()
    mapfile -t READINGS < <(jq -M -j ".results[] | select(.name == \"CIB\") | .status" < ${STATE_FILE})
+   RETVAL="${?}"
 
-   is_array READINGS || { fail "Failed to fetch CIB from ${STATE_FILE}!"; return 1; }
+   if [ "x${RETVAL}" != "x0" ]; then
+      echo "'jq' or 'mapfile' exited non-zero (${RETVAL})!."
+      return 1
+   fi
+
+   if ! is_array READINGS || [ ${#READINGS[@]} -lt 1 ]; then
+      fail "Failed to fetch CIB from ${STATE_FILE}!"
+      return 1
+   fi
 
    for LINE in "${READINGS[@]}"; do
 
@@ -483,24 +545,12 @@ parse_icinga2_status ()
    done
 
    return 0
-
-   #[ ${#READING[@]} -gt 0 ] || continue
-   #[[ -n ${READING['label']} ]] || { fail "Label not set!"; return 1; }
-   #[[ -n ${READING['value']} ]] || { fail "Value not set!"; return 1; }
-   # found no way yet, why the above regexp return an ' ' for empty values.
-   #[[ -n ${READING['unit']} ]] && [ "${READING['unit']}" == " " ] && READING['unit']=''
-
-   #RESULT_PERFC+="'${READING['label']}'=${READING['value']}${READING['unit']-};${READING['warn']-};${READING['crit']-};${READING['min']-};${READING['max']-} "
-#      RESULT_PERFC+="'${READING['label']}'=${READING['value']}${READING['unit']-};${READING['warn']-};${READING['crit']-};${READING['min']-};${READING['max']-} "
-
-   #echo ${RESULT_PERFC}
-   ##json_pp < ${STATE_FILE}
 }
 
 # @function eval_icinga2_status()
 # @brief This function evaluates the parsed heath-information that
 # has been previously stored in $RESULTS.
-# TODO At the moment, that is actually no matching against thresholds.
+# TODO At the moment, that is actually not matching against thresholds.
 # Just OK if state-information exists, otherwise it issues a WARNING.
 # @return int
 eval_icinga2_status ()
