@@ -22,8 +22,9 @@
 
 PROGNAME := check_icinga2
 
-.PHONY: all clean docs test
-all:
+.PHONY: all clean docs test all
+
+start:
 	@echo "Thank you for invoking the Makefile of $(PROGNAME)"
 	@echo
 	@echo "The following make targets are available:"
@@ -49,4 +50,8 @@ check:
 	bash -n $(PROGNAME).sh
 	@echo ">>> Now analysing and linting..."
 	shellcheck -x -s bash $(PROGNAME).sh
+	@echo ">>> Now linting all markdown files..."
+	find $(CURDIR) -type f -name '*.md' -execdir mdl {} \;
 	@echo ">>> This looks like a success!"
+
+all: docs check test
