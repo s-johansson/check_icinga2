@@ -1,6 +1,6 @@
 # Changes in check_icinga2
 
-## 1.1 (unreleased)
+## 1.1 (2017-08-31)
 
 * update code to make shellcheck happy.
 * remove some functions that are now already provided by the

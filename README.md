@@ -1,4 +1,4 @@
-This is check_icinga2.
+This is check_icinga2 v1.1.
 
 This plugin checks the Icinga2 state via the Icinga2 API.
 
