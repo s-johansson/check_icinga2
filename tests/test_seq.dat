@@ -1,0 +1,10 @@
+[1xx]
+well_known_keys
+
+[2xx]
+plugin_params_validate
+plugin_worker
+fetch_icinga2_status
+parse_icinga2_status
+eval_icinga2_status
+plugin_startup

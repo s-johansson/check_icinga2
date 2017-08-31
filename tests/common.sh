@@ -104,7 +104,7 @@ assert_func ()
    RESULT=$($FUNC "${@}" 2>&1)
    RETVAL=$?
 
-   if [[ ${RETVAL} =~ ${EXPECT_CODE} ]] && \
+   if [[ ${RETVAL} =~ ${EXPECT_CODE//[[:blank:]]/[[:blank:]]} ]] && \
       ( ( [ "${EXPECT_TEXT}" == "${TEST_EMPTY}" ] && [ -z "${RESULT}" ] ) || \
       [[ "${RESULT}" =~ ${EXPECT_TEXT} ]] ); then
       do_debug "PASS"
