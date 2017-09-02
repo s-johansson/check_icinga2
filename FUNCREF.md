@@ -3,7 +3,7 @@
 | Tag | Value |
 | - | - |
 | Author | Andreas Unterkircher |
-| Version | 1.0 |
+| Version | 1.1 |
 | License | AGPLv3 |
 
 ## 1. Function `plugin_params_validate`
@@ -68,4 +68,4 @@ trap, that tries to ensure, that any residues in the filesystem get removed.
 
 Type: `int`
 
-[^1]: Created by shell-docs-gen.sh v1.3.1 on Don Aug 31 07:08:40 CEST 2017.
+[^1]: Created by shell-docs-gen.sh v1.3.1 on Sam Sep  2 11:12:50 CEST 2017.

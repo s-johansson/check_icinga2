@@ -42,8 +42,8 @@ if [ $# -ge 1 ] && [ "${1}" == "-n" ]; then
 fi
 
 if ! is_func csl_require_libvers || \
-   ! [[ "$(csl_require_libvers "1.5")" =~ ^(gt|eq)$ ]]; then
-   echo "monitoring-common-shell-library v1.5 or higher is required."
+   ! [[ "$(csl_require_libvers "1.6.4")" =~ ^(gt|eq)$ ]]; then
+   echo "monitoring-common-shell-library v1.6.4 or higher is required."
    exit 1
 fi
 
@@ -148,32 +148,33 @@ EOF
 # @return int
 plugin_params_validate ()
 {
-   has_param_value ICINGA2_FILE && \
+   has_param ICINGA2_FILE && has_param_value ICINGA2_FILE && \
       debug "Input file: $(get_param_value ICINGA2_FILE)"
-   has_param_value ICINGA2_HOST && \
+   has_param ICINGA2_HOST && has_param_value ICINGA2_HOST && \
       debug "Icinga2 host: $(get_param_value ICINGA2_HOST)"
-   has_param_value ICINGA2_PORT && \
+   has_param ICINGA2_PORT && has_param_value ICINGA2_PORT && \
       debug "Icinga2 port: $(get_param_value ICINGA2_PORT)"
-   has_param_value ICINGA2_URI && \
+   has_param ICINGA2_URI && has_param_value ICINGA2_URI && \
       debug "Icinga2 uri: $(get_param_value ICINGA2_URI)"
-   has_param_value ICINGA2_PROTO && \
+   has_param ICINGA2_PROTO && has_param_value ICINGA2_PROTO && \
        debug "Icinga2 protocol: $(get_param_value ICINGA2_PROTO)"
-   has_param_value ICINGA2_USER && \
+   has_param ICINGA2_USER && has_param_value ICINGA2_USER && \
        debug "Icinga2 user: $(get_param_value ICINGA2_USER)"
-   has_param_value ICINGA2_PASS && \
+   has_param ICINGA2_PASS && has_param_value ICINGA2_PASS && \
        debug "Icinga2 pass: $(get_param_value ICINGA2_PASS)"
-   has_param_value ICINGA2_CERT && \
+   has_param ICINGA2_CERT && has_param_value ICINGA2_CERT && \
        debug "Icinga2 cert: $(get_param_value ICINGA2_CERT)"
-   has_param_value ICINGA2_KEY && \
+   has_param ICINGA2_KEY && has_param_value ICINGA2_KEY && \
       debug "Icinga2 key: $(get_param_value ICINGA2_KEY)"
-   has_param_value ICINGA2_CACERT && \
+   has_param ICINGA2_CACERT && has_param_value ICINGA2_CACERT && \
       debug "Icinga2 cacert: $(get_param_value ICINGA2_CACERT)"
 
    #
    # Icinga2 host
    #
-   if ! has_param_value ICINGA2_HOST || \
-      ! [[ "$(get_param_value ICINGA2_HOST)" =~ ^[[:graph:]]+$ ]]; then
+   if has_param ICINGA2_HOST && (
+      ! has_param_value ICINGA2_HOST || \
+      ! [[ "$(get_param_value ICINGA2_HOST)" =~ ^[[:graph:]]+$ ]] ); then
       fail "Invalid Icinga2 hostname provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -181,8 +182,9 @@ plugin_params_validate ()
    #
    # Icinga2 API port
    #
-   if ! has_param_value ICINGA2_PORT || \
-      ! [[ "$(get_param_value ICINGA2_PORT)" =~ ^[[:digit:]]+$ ]]; then
+   if has_param ICINGA2_PORT && ( \
+      ! has_param_value ICINGA2_PORT || \
+      ! [[ "$(get_param_value ICINGA2_PORT)" =~ ^[[:digit:]]+$ ]] ); then
       fail "Invalid Icinga2 port provided. Allowed are only numeric characters!"
       return 1
    fi
@@ -190,8 +192,9 @@ plugin_params_validate ()
    #
    # Icinga2 API status URI
    #
-   if ! has_param_value ICINGA2_URI || \
-      ! [[ "$(get_param_value ICINGA2_URI)" =~ ^[[:graph:]]+$ ]]; then
+   if has_param ICINGA2_URI && ( \
+      ! has_param_value ICINGA2_URI || \
+      ! [[ "$(get_param_value ICINGA2_URI)" =~ ^[[:graph:]]+$ ]] ); then
       fail "Invalid Icinga2 URI provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -199,8 +202,9 @@ plugin_params_validate ()
    #
    # Icinga2 API protocol
    #
-   if ! has_param_value ICINGA2_PROTO || \
-      ! [[ "$(get_param_value ICINGA2_PROTO)" =~ ^https?$ ]]; then
+   if has_param ICINGA2_PROTO && ( \
+      ! has_param_value ICINGA2_PROTO || \
+      ! [[ "$(get_param_value ICINGA2_PROTO)" =~ ^https?$ ]] ); then
       fail "Invalid Icinga2 protocol provided. Allowed are only http or https!"
       return 1
    fi
@@ -208,8 +212,9 @@ plugin_params_validate ()
    #
    # Icinga2 API authentication username
    #
-   if has_param_value ICINGA2_USER && \
+   if has_param ICINGA2_USER && has_param_value ICINGA2_USER && \
       ! [[ "$(get_param_value ICINGA2_USER)" =~ ^[[:graph:]]+$ ]]; then
+
       fail "Invalid Icinga2 user provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -217,8 +222,9 @@ plugin_params_validate ()
    #
    # Icinga2 API authentication password
    #
-   if has_param_value ICINGA2_PASS && \
+   if has_param ICINGA2_PASS && has_param_value ICINGA2_PASS && \
       ! [[ "$(get_param_value ICINGA2_PASS)" =~ ^[[:graph:]]+$ ]]; then
+
       fail "Invalid Icinga2 password provided. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
@@ -226,7 +232,7 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL certificate in PEM format
    #
-   if has_param_value ICINGA2_CERT && ( \
+   if has_param ICINGA2_CERT && has_param_value ICINGA2_CERT && ( \
       ! [[ "$(get_param_value ICINGA2_CERT)" =~ ^[[:graph:]]+$ ]] || \
       [ ! -r "$(get_param_value ICINGA2_CERT)" ] ); then
       fail "Invalid Icinga2 cert provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
@@ -236,7 +242,7 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL certificate
    #
-   if has_param_value ICINGA2_KEY && ( \
+   if has_param ICINGA2_KEY && has_param_value ICINGA2_KEY && ( \
       ! [[ "$(get_param_value ICINGA2_KEY)" =~ ^[[:graph:]]+$ ]] || \
       [ ! -r "$(get_param_value ICINGA2_KEY)" ] ); then
       fail "Invalid Icinga2 key provided or the file is not readable. Allowed are only alpha-numeric and punctation characters!"
@@ -246,7 +252,7 @@ plugin_params_validate ()
    #
    # Icinga2 API x509 SSL CA certificate
    #
-   if has_param_value ICINGA2_CACERT && ( \
+   if has_param ICINGA2_CACERT && has_param_value ICINGA2_CACERT && ( \
       ! [[ "$(get_param_value ICINGA2_CACERT)" =~ ^[[:graph:]]+$ ]] || ( \
       [ "$(get_param_value ICINGA2_CACERT)" != "noverify" ] && \
       [ ! -r "$(get_param_value ICINGA2_CACERT)" ] ) ); then
@@ -257,10 +263,10 @@ plugin_params_validate ()
    #
    # Icinga2 API status as file.
    #
-   if has_param_value ICINGA2_FILE && ( \
+   if has_param ICINGA2_FILE && has_param_value ICINGA2_FILE && ( \
       ! [[ "$(get_param_value ICINGA2_FILE)" =~ ^[[:print:]]+$ ]] || \
       [ ! -r "$(get_param_value ICINGA2_FILE)" ] ); then
-      fail "Invalid Icinga2 API status file is not readable.!"
+      fail "Icinga2 API status file is invalid or not readable. Allowed are only alpha-numeric and punctation characters!"
       return 1
    fi
 
@@ -278,7 +284,7 @@ plugin_worker ()
 {
    add_prereq jq
 
-   if ! has_param_value ICINGA2_FILE; then
+   if ! has_param ICINGA2_FILE || ! has_param_value ICINGA2_FILE; then
       fetch_icinga2_status || \
          { fail "fetch_icinga2_status() returned non-zero!"; exit 1; }
    fi
@@ -308,12 +314,10 @@ fetch_icinga2_status ()
    #
    # Query URI
    #
-
-   if ! has_param_value ICINGA2_FILE && ( \
-      ! has_param_value ICINGA2_HOST || \
-      ! has_param_value ICINGA2_PORT || \
-      ! has_param_value ICINGA2_URI || \
-      ! has_param_value ICINGA2_PROTO ); then
+   if ! has_param ICINGA2_HOST || ! has_param_value ICINGA2_HOST || \
+      ! has_param ICINGA2_PORT || ! has_param_value ICINGA2_PORT || \
+      ! has_param ICINGA2_URI || ! has_param_value ICINGA2_URI || \
+      ! has_param ICINGA2_PROTO || ! has_param_value ICINGA2_PROTO; then
       fail "Not all required parameters are set!"
       return 1
    fi
@@ -334,14 +338,12 @@ fetch_icinga2_status ()
    # Authentication
    #
 
-   if has_param_value ICINGA2_USER && ! has_param_value ICINGA2_PASS || \
-      ! has_param_value ICINGA2_USER && has_param_value ICINGA2_PASS; then
+   if ( has_param ICINGA2_USER && has_param_value ICINGA2_USER && ( ! has_param ICINGA2_PASS || ! has_param_value ICINGA2_PASS ) ) || \
+      ( ( ! has_param ICINGA2_USER || ! has_param_value ICINGA2_USER ) && has_param ICINGA2_PASS && has_param_value ICINGA2_PASS ); then
       fail "Incomplete user credentials provided!"
       return 1
-   fi
-
-   if has_param_value ICINGA2_CERT && ! has_param_value ICINGA2_KEY || \
-      ! has_param_value ICINGA2_CERT && has_param_value ICINGA2_KEY; then
+   elif ( has_param ICINGA2_CERT && has_param_value ICINGA2_CERT && ( ! has_param ICINGA2_KEY || ! has_param_value ICINGA2_KEY ) ) || \
+      ( ( ! has_param ICINGA2_CERT || ! has_param_value ICINGA2_CERT ) && has_param ICINGA2_KEY && has_param_value ICINGA2_KEY ); then
       fail "Incomplete cert/key provided!"
       return 1
    fi
@@ -351,7 +353,7 @@ fetch_icinga2_status ()
    # so the password is _not_ visible as
    # command-line parameter.
    #
-   if has_param_value ICINGA2_USER; then
+   if has_param ICINGA2_USER && has_param_value ICINGA2_USER; then
       cat >${TMPDIR}/.netrc <<-EOF
       machine $(get_param_value ICINGA2_HOST) login $(get_param_value ICINGA2_USER) password $(get_param_value ICINGA2_PASS)
 EOF
@@ -361,12 +363,12 @@ EOF
    #
    # certificate-authentication
    #
-   if has_param_value ICINGA2_CERT; then
+   if has_param ICINGA2_CERT && has_param_value ICINGA2_CERT; then
       CURL_OPT+=( "--cert" "$(get_param_value ICINGA2_CERT)" )
       CURL_OPT+=( "--key" "$(get_param_value ICINGA2_KEY)" )
    fi
 
-   if has_param_value ICINGA2_CACERT; then
+   if has_param ICINGA2_CACERT && has_param_value ICINGA2_CACERT; then
       local CACERT
       CACERT="$(get_param_value ICINGA2_CACERT)"
       # disable SSL server cert verification, take at your own risk!
@@ -589,7 +591,9 @@ plugin_startup ()
 
    STATE_FILE="${TMPDIR}/icinga2.state"
 
-   if has_param_value ICINGA2_FILE; then
+   if has_param ICINGA2_FILE && \
+      has_param_value ICINGA2_FILE; then
+      debug "Using '$(get_param_value ICINGA2_FILE)' to read state information."
       STATE_FILE="$(get_param_value ICINGA2_FILE)"
    fi
 

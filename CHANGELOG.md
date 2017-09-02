@@ -1,4 +1,10 @@
-# Changes in check_icinga2
+# Changes in check\_icinga2
+
+## 1.1.1 (unreleased)
+
+* require mcsl >= v1.6.4
+* before calling has\_param\_value(), first has\_param() has to
+  be called, to check for a command-line parameter to actually exist.
 
 ## 1.1 (2017-08-31)
 
