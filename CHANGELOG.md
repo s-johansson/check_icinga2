@@ -1,6 +1,6 @@
 # Changes in check\_icinga2
 
-## 1.1.1 (unreleased)
+## 1.2 (2017-09-02)
 
 * require mcsl >= v1.6.4
 * before calling has\_param\_value(), first has\_param() has to
