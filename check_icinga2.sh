@@ -3,7 +3,7 @@
 ###############################################################################
 
 
-# This file is part of check_icinga2 v1.2.
+# This file is part of check_icinga2 v1.3.
 #
 # check_icinga2, a monitoring plugin for (c) Icinga2.
 #
@@ -22,7 +22,7 @@
 # @author Andreas Unterkircher
 # @license AGPLv3
 # @title check_icinga2
-# @version 1.2
+# @version 1.3
 
 set -u -e -o pipefail # exit-on-error, error on undeclared variables.
 #shopt -s sourcepath  # in case Bash won't consider $PATH.
@@ -51,8 +51,13 @@ fi
 # <Variables>
 #
 
+# @var PROGNAME
+# @description Plugin Program Name
 readonly PROGNAME="check_icinga2"
-readonly VERSION="1.2"
+
+# @var VERSION
+# @description Plugin Version
+readonly VERSION="1.3"
 
 declare -g TMPDIR='' STATE_FILE=''
 # shellcheck disable=SC2034

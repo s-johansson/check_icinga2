@@ -1,5 +1,9 @@
 # Changes in check\_icinga2
 
+## 1.3 (2019-01-03)
+
+* adapt for and require MCSL >= v1.9
+
 ## 1.2 (2017-09-02)
 
 * require mcsl >= v1.6.4
