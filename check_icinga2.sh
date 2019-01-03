@@ -41,9 +41,9 @@ if [ $# -ge 1 ] && [ "${1}" == "-n" ]; then
    shift
 fi
 
-if ! is_func csl_require_libvers || \
-   ! [[ "$(csl_require_libvers "1.6.4")" =~ ^(gt|eq)$ ]]; then
-   echo "monitoring-common-shell-library v1.6.4 or higher is required."
+if ! is_func _csl_require_libvers || \
+   ! [[ "$(_csl_require_libvers '1.9')" =~ ^(gt|eq)$ ]]; then
+   echo "monitoring-common-shell-library v1.9 or higher is required."
    exit 1
 fi
 
