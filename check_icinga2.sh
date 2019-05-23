@@ -287,7 +287,6 @@ plugin_params_validate ()
 # @return int
 plugin_worker ()
 {
-   add_prereq jq
 
    if ! has_param ICINGA2_FILE || ! has_param_value ICINGA2_FILE; then
       fetch_icinga2_status || \
@@ -613,8 +612,10 @@ plugin_startup ()
 # <TheActualWorkStartsHere>
 #
 ! [[ -v DO_NOT_RUN ]] || return 0
-startup "${@}"
 
+add_prereq jq
+
+startup "${@}"
 
 #
 # normally our script should have exited in print_result() already.
