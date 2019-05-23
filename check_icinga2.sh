@@ -454,7 +454,7 @@ parse_icinga2_status ()
    # retrieve
    #
    for LABEL in "${LABELS[@]}"; do
-      mapfile -t READINGS < <(jq -M -j ".results[].perfdata[] | select(.label == \"${LABEL}\")" < ${STATE_FILE})
+      mapfile -t READINGS < <(jq -M -r ".results[].perfdata[] | select(.label == \"${LABEL}\")" < ${STATE_FILE})
       RETVAL="${?}"
 
       if [ "x${RETVAL}" != "x0" ]; then
@@ -510,7 +510,7 @@ parse_icinga2_status ()
    # next the CIB statistics - have no clue what CIB means :)
    #
    READINGS=()
-   mapfile -t READINGS < <(jq -M -j ".results[] | select(.name == \"CIB\") | .status" < ${STATE_FILE})
+   mapfile -t READINGS < <(jq -M -r ".results[] | select(.name == \"CIB\") | .status" < ${STATE_FILE})
    RETVAL="${?}"
 
    if [ "x${RETVAL}" != "x0" ]; then
